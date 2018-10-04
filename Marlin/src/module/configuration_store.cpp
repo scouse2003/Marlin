@@ -95,6 +95,10 @@ typedef struct {  int16_t X, Y, Z;                                         } tmc
   #include "../feature/pause.h"
 #endif
 
+#if ENABLED(SINGLENOZZLE)
+  #include "tool_change.h"
+#endif
+
 #if ENABLED(PID_EXTRUSION_SCALING)
   #define LPQ_LEN thermalManager.lpq_len
 #endif
@@ -135,6 +139,10 @@ typedef struct SettingsDataStruct {
 
   #if HAS_HOTEND_OFFSET
     float hotend_offset[XYZ][HOTENDS - 1];              // M218 XYZ
+  #endif
+
+  #if ENABLED(SINGLENOZZLE)
+    float filament_swap_length;
   #endif
 
   //
@@ -463,6 +471,10 @@ void MarlinSettings::postprocess() {
         LOOP_XYZ(i) EEPROM_WRITE(hotend_offset[i][e]);
     #endif
 
+    #if ENABLED(SINGLENOZZLE)
+      _FIELD_TEST(filament_swap_length);
+      EEPROM_WRITE(filament_swap_length);
+    #endif
     //
     // Global Leveling
     //
@@ -877,7 +889,6 @@ void MarlinSettings::postprocess() {
     //
     // Linear Advance
     //
-
     _FIELD_TEST(planner_extruder_advance_K);
 
     #if ENABLED(LIN_ADVANCE)
@@ -888,10 +899,6 @@ void MarlinSettings::postprocess() {
     #endif
 
     _FIELD_TEST(motor_current_setting);
-
-    //
-    // Motor Current PWM
-    //
 
     #if HAS_MOTOR_CURRENT_PWM
       for (uint8_t q = XYZ; q--;) EEPROM_WRITE(stepper.motor_current_setting[q]);
@@ -1084,6 +1091,10 @@ void MarlinSettings::postprocess() {
         // Skip hotend 0 which must be 0
         for (uint8_t e = 1; e < HOTENDS; e++)
           LOOP_XYZ(i) EEPROM_READ(hotend_offset[i][e]);
+      #endif
+
+      #if ENABLED(SINGLENOZZLE)
+        EEPROM_READ(filament_swap_length);
       #endif
 
       //
@@ -1413,8 +1424,6 @@ void MarlinSettings::postprocess() {
         for (uint8_t q=TMC_AXES; q--;) EEPROM_READ(val);
       #endif
 
-      _FIELD_TEST(tmc_hybrid_threshold);
-
       #if ENABLED(HYBRID_THRESHOLD)
         #define TMC_SET_PWMTHRS(A,Q) tmc_set_pwmthrs(stepper##Q, tmc_hybrid_threshold.Q, planner.axis_steps_per_mm[_AXIS(A)])
         tmc_hybrid_threshold_t tmc_hybrid_threshold;
@@ -1465,15 +1474,12 @@ void MarlinSettings::postprocess() {
         for (uint8_t q=TMC_AXES; q--;) EEPROM_READ(thrs_val);
       #endif
 
-      /**
+      /*
        * TMC StallGuard threshold.
        * X and X2 use the same value
        * Y and Y2 use the same value
        * Z, Z2 and Z3 use the same value
        */
-
-      _FIELD_TEST(tmc_sgt);
-
       tmc_sgt_t tmc_sgt;
       EEPROM_READ(tmc_sgt);
       #if USE_SENSORLESS
@@ -1841,6 +1847,9 @@ void MarlinSettings::reset(PORTARG_SOLO) {
     #endif
   #endif
 
+  #if ENABLED(SINGLENOZZLE)
+    filament_swap_length = SINGLENOZZLE_FILAMENTLENGTH;
+  #endif
   //
   // Global Leveling
   //

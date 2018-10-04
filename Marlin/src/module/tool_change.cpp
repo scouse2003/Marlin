@@ -25,9 +25,12 @@
 #include "probe.h"
 #include "motion.h"
 #include "planner.h"
-
+#include "temperature.h"
 #include "../Marlin.h"
 
+#if ENABLED(SINGLENOZZLE)
+  float filament_swap_length;
+#endif
 #if ENABLED(PARKING_EXTRUDER) && PARKING_EXTRUDER_SOLENOIDS_DELAY > 0
   #include "../gcode/gcode.h" // for dwell()
 #endif
@@ -632,8 +635,23 @@ void tool_change(const uint8_t tmp_extruder, const float fr_mm_s/*=0.0*/, bool n
       #endif
 
       #if EXTRUDERS > 1
+        #if ENABLED(SINGLENOZZLE)
+          #if ENABLED(PREVENT_COLD_EXTRUSION)
+            if (!DEBUGGING(DRYRUN) && thermalManager.targetTooColdToExtrude(active_extruder)) {
+              SERIAL_ERROR_START();
+              SERIAL_ERRORLNPGM(MSG_HOTEND_TOO_COLD);
+              return invalid_extruder_error(tmp_extruder);
+            }
+          #endif
+          current_position[E_AXIS] += filament_swap_length;      // Adjust the current E position by the amount to retract
+          sync_plan_position_e();                                       // Sync the planner position so the material is moved
+        #endif
         // Set the new active extruder
         active_extruder = tmp_extruder;
+        #if ENABLED(SINGLENOZZLE)
+          current_position[E_AXIS] -= filament_swap_length;      // Adjust the current E position by the amount to prime
+          sync_plan_position_e();                                       // Sync the planner position so the prime amount is moved
+        #endif
       #endif
 
     #endif // HOTENDS <= 1

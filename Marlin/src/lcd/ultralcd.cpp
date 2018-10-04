@@ -3438,6 +3438,13 @@ void lcd_quick_feedback(const bool clear_buttons) {
     }
 
     //
+    // Set single nozzle filament retract and prime length
+    //
+    #if ENABLED(SINGLENOZZLE)
+      MENU_ITEM_EDIT(float3, MSG_FILAMENT_SWAP_LENGTH, &filament_swap_length, 0, 200);
+    #endif
+
+    //
     // Set Case light on/off/brightness
     //
     #if ENABLED(MENU_ITEM_CASE_LIGHT)

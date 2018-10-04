@@ -50,6 +50,9 @@
 
 #endif // PARKING_EXTRUDER
 
+#if ENABLED(SINGLENOZZLE)
+  extern float filament_swap_length;
+#endif
 /**
  * Perform a tool-change, which may result in moving the
  * previous tool out of the way and the new tool into place.
