@@ -27,6 +27,11 @@
 #include "../gcode.h"
 #include "../../Marlin.h" // for fanSpeeds — should move those to Planner
 
+#if ENABLED(SINGLENOZZLE)
+  #include "../../module/motion.h"
+  #include "../../module/tool_change.h"
+#endif
+
 /**
  * M106: Set Fan Speed
  *
@@ -42,6 +47,12 @@
  */
 void GcodeSuite::M106() {
   const uint8_t p = parser.byteval('P');
+  #if ENABLED(SINGLENOZZLE)
+    if (p != active_extruder && p <= EXTRUDERS){
+      cooling_storage[p] = parser.ushortval('S', 255);
+     return;
+   } else {
+  #endif
   if (p < FAN_COUNT) {
     #if ENABLED(EXTRA_FAN_SPEED)
       const int16_t t = parser.intval('T');
@@ -64,6 +75,9 @@ void GcodeSuite::M106() {
     const uint16_t s = parser.ushortval('S', 255);
     fanSpeeds[p] = MIN(s, 255U);
   }
+  #if ENABLED(SINGLENOZZLE)
+    }
+  #endif
 }
 
 /**
@@ -71,7 +85,16 @@ void GcodeSuite::M106() {
  */
 void GcodeSuite::M107() {
   const uint16_t p = parser.ushortval('P');
+  #if ENABLED(SINGLENOZZLE)
+    if (p != active_extruder && p <= EXTRUDERS){
+      cooling_storage[p] = 0;
+     return;
+   } else {
+  #endif
   if (p < FAN_COUNT) fanSpeeds[p] = 0;
+  #if ENABLED(SINGLENOZZLE)
+    }
+  #endif
 }
 
 #endif // FAN_COUNT > 0

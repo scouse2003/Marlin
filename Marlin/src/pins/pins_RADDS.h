@@ -131,6 +131,7 @@
 
     #define RADDS_EXT_MSI_PIN 69
 
+    #define MAX_EXTRUDERS 6
     #define BOARD_INIT() OUT_WRITE(RADDS_EXT_VDD_PIN, HIGH)
 
   #else

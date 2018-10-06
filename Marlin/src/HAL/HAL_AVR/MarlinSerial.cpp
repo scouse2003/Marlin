@@ -705,35 +705,35 @@
 
   // Hookup ISR handlers
   ISR(SERIAL_REGNAME(USART,SERIAL_PORT,_RX_vect)) {
-    MarlinSerial<MarlinSerialCfg<SERIAL_PORT>>::store_rxd_char();
+    MarlinSerial<MarlinSerialCfg1>::store_rxd_char();
   }
 
   ISR(SERIAL_REGNAME(USART,SERIAL_PORT,_UDRE_vect)) {
-    MarlinSerial<MarlinSerialCfg<SERIAL_PORT>>::_tx_udr_empty_irq();
+    MarlinSerial<MarlinSerialCfg1>::_tx_udr_empty_irq();
   }
 
   // Preinstantiate
-  template class MarlinSerial<MarlinSerialCfg<SERIAL_PORT>>;
+  template class MarlinSerial<MarlinSerialCfg1>;
 
   // Instantiate
-  MarlinSerial<MarlinSerialCfg<SERIAL_PORT>> customizedSerial1;
+  MarlinSerial<MarlinSerialCfg1> customizedSerial1;
 
   #ifdef SERIAL_PORT_2
 
     // Hookup ISR handlers
     ISR(SERIAL_REGNAME(USART,SERIAL_PORT_2,_RX_vect)) {
-      MarlinSerial<MarlinSerialCfg<SERIAL_PORT_2>>::store_rxd_char();
+      MarlinSerial<MarlinSerialCfg2>::store_rxd_char();
     }
 
     ISR(SERIAL_REGNAME(USART,SERIAL_PORT_2,_UDRE_vect)) {
-      MarlinSerial<MarlinSerialCfg<SERIAL_PORT_2>>::_tx_udr_empty_irq();
+      MarlinSerial<MarlinSerialCfg2>::_tx_udr_empty_irq();
     }
 
     // Preinstantiate
-    template class MarlinSerial<MarlinSerialCfg<SERIAL_PORT_2>>;
+    template class MarlinSerial<MarlinSerialCfg2>;
 
     // Instantiate
-    MarlinSerial<MarlinSerialCfg<SERIAL_PORT_2>> customizedSerial2;
+    MarlinSerial<MarlinSerialCfg2> customizedSerial2;
 
   #endif
 

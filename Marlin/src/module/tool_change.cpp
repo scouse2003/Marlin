@@ -30,6 +30,8 @@
 
 #if ENABLED(SINGLENOZZLE)
   float filament_swap_length;
+  int16_t  temp_storage[EXTRUDERS];
+  int16_t cooling_storage[EXTRUDERS];
 #endif
 #if ENABLED(PARKING_EXTRUDER) && PARKING_EXTRUDER_SOLENOIDS_DELAY > 0
   #include "../gcode/gcode.h" // for dwell()
@@ -643,14 +645,32 @@ void tool_change(const uint8_t tmp_extruder, const float fr_mm_s/*=0.0*/, bool n
               return invalid_extruder_error(tmp_extruder);
             }
           #endif
-          current_position[E_AXIS] += filament_swap_length;      // Adjust the current E position by the amount to retract
-          sync_plan_position_e();                                       // Sync the planner position so the material is moved
-        #endif
-        // Set the new active extruder
-        active_extruder = tmp_extruder;
-        #if ENABLED(SINGLENOZZLE)
-          current_position[E_AXIS] -= filament_swap_length;      // Adjust the current E position by the amount to prime
-          sync_plan_position_e();                                       // Sync the planner position so the prime amount is moved
+          set_destination_from_current();
+          current_position[Z_AXIS] += 1.0;
+          planner.buffer_line(current_position, planner.max_feedrate_mm_s[Z_AXIS], active_extruder);
+          SERIAL_ECHOLNPAIR(MSG_ACTIVE_EXTRUDER, int(active_extruder));
+          //SERIAL_ECHOLNPAIR("current temp", int(thermalManager.target_temperature[active_extruder]));
+          //temp_storage[active_extruder] = thermalManager.target_temperature[active_extruder];
+          cooling_storage[active_extruder] = fanSpeeds[active_extruder];
+          SERIAL_ECHOLNPAIR("stored old temp", int(temp_storage[active_extruder]));
+          current_position[E_AXIS] -= filament_swap_length;      // Adjust the current E position by the amount to retract
+          planner.buffer_line(current_position, (planner.max_feedrate_mm_s[E_AXIS]/6), active_extruder);
+          //sync_plan_position_e();
+          // Set the new active extruder
+          active_extruder = tmp_extruder;
+          SERIAL_ECHOLNPAIR(MSG_ACTIVE_EXTRUDER, int(active_extruder));
+          SERIAL_ECHOLNPAIR("stored new temp", int(temp_storage[active_extruder]));
+          thermalManager.setTargetHotend(temp_storage[active_extruder], active_extruder);
+          fanSpeeds[active_extruder] = cooling_storage[active_extruder];
+          (void)thermalManager.wait_for_hotend(active_extruder, 0);
+          current_position[E_AXIS] += filament_swap_length;      // Adjust the current E position by the amount to prime
+          planner.buffer_line(current_position, (planner.max_feedrate_mm_s[E_AXIS] /6), active_extruder);
+          //sync_plan_position_e();
+          do_blocking_move_to(destination[X_AXIS], destination[Y_AXIS], destination[Z_AXIS]);
+
+        #else
+          // Set the new active extruder
+          active_extruder = tmp_extruder;                                      // Sync the planner position so the material is moved
         #endif
       #endif
 

@@ -52,6 +52,8 @@
 
 #if ENABLED(SINGLENOZZLE)
   extern float filament_swap_length;
+  extern int16_t temp_storage[EXTRUDERS];
+  extern int16_t cooling_storage[EXTRUDERS];
 #endif
 /**
  * Perform a tool-change, which may result in moving the

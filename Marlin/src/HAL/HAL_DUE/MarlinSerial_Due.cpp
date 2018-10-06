@@ -631,20 +631,20 @@ void MarlinSerial<Cfg>::printFloat(double number, uint8_t digits) {
 #if SERIAL_PORT >= 0
 
   // Preinstantiate
-  template class MarlinSerial<MarlinSerialCfg<SERIAL_PORT>>;
+  template class MarlinSerial<MarlinSerialCfg1>;
 
   // Instantiate
-  MarlinSerial<MarlinSerialCfg<SERIAL_PORT>> customizedSerial1;
+  MarlinSerial<MarlinSerialCfg1> customizedSerial1;
 
 #endif
 
 #ifdef SERIAL_PORT_2
 
   // Preinstantiate
-  template class MarlinSerial<MarlinSerialCfg<SERIAL_PORT_2>>;
+  template class MarlinSerial<MarlinSerialCfg2>;
 
   // Instantiate
-  MarlinSerial<MarlinSerialCfg<SERIAL_PORT_2>> customizedSerial2;
+  MarlinSerial<MarlinSerialCfg2> customizedSerial2;
 
 #endif
 
