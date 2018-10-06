@@ -51,10 +51,8 @@ void GcodeSuite::M104() {
   if (parser.seenval('S')) {
     const int16_t temp = parser.value_celsius();
     #if ENABLED(SINGLENOZZLE)
-      temp_storage[e] = temp;
-      if (e != active_extruder){
-       return;
-     }
+      singlenozzle_temp[e] = temp;
+      if (e != active_extruder) return;
     #endif
     thermalManager.setTargetHotend(temp, e);
 
@@ -96,10 +94,8 @@ void GcodeSuite::M109() {
   if (set_temp) {
     const int16_t temp = parser.value_celsius();
     #if ENABLED(SINGLENOZZLE)
-      temp_storage[target_extruder] = temp;
-      if (target_extruder != active_extruder){
-       return;
-     }
+      singlenozzle_temp[target_extruder] = temp;
+      if (target_extruder != active_extruder) return;
     #endif
     thermalManager.setTargetHotend(temp, target_extruder);
 

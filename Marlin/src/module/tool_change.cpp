@@ -26,13 +26,20 @@
 #include "motion.h"
 #include "planner.h"
 #include "temperature.h"
+
 #include "../Marlin.h"
 
 #if ENABLED(SINGLENOZZLE)
   float filament_swap_length;
-  int16_t  temp_storage[EXTRUDERS];
-  int16_t cooling_storage[EXTRUDERS];
+  uint16_t singlenozzle_temp[EXTRUDERS];
+  #if FAN_COUNT > 0
+    uint8_t singlenozzle_fan_speed[EXTRUDERS];
+  #endif
+  point_t single_nozzle_change_point = SINGLENOZZLE_TOOLCHANGE_POSITION;
+  float single_nozzle_prime_speed = SINGLENOZZLE_SWAP_PRIME_SPEED;
+  float single_nozzle_retract_speed = SINGLENOZZLE_SWAP_RETRACT_SPEED;
 #endif
+
 #if ENABLED(PARKING_EXTRUDER) && PARKING_EXTRUDER_SOLENOIDS_DELAY > 0
   #include "../gcode/gcode.h" // for dwell()
 #endif
@@ -630,49 +637,80 @@ void tool_change(const uint8_t tmp_extruder, const float fr_mm_s/*=0.0*/, bool n
       UNUSED(no_move);
 
       #if ENABLED(MK2_MULTIPLEXER)
-        if (tmp_extruder >= E_STEPPERS)
-          return invalid_extruder_error(tmp_extruder);
-
+        if (tmp_extruder >= E_STEPPERS) return invalid_extruder_error(tmp_extruder);
         select_multiplexed_stepper(tmp_extruder);
       #endif
 
       #if EXTRUDERS > 1
+
         #if ENABLED(SINGLENOZZLE)
+
           #if ENABLED(PREVENT_COLD_EXTRUSION)
             if (!DEBUGGING(DRYRUN) && thermalManager.targetTooColdToExtrude(active_extruder)) {
               SERIAL_ERROR_START();
               SERIAL_ERRORLNPGM(MSG_HOTEND_TOO_COLD);
-              return invalid_extruder_error(tmp_extruder);
+              return;
             }
           #endif
+
+          const float feedrate_e = planner.max_feedrate_mm_s[E_AXIS] / 6.0f;
+
+          #if FAN_COUNT > 0
+            singlenozzle_fanspeed[active_extruder] = fanSpeeds[0];
+            fanSpeeds[0] = singlenozzle_fanspeed[tmp_extruder];
+          #endif
+
           set_destination_from_current();
-          current_position[Z_AXIS] += 1.0;
+
+          #if ENABLED(SINGLENOZZLE_SWAP_PARK)
+            current_position[Z_AXIS] += single_nozzle_change_point.z;
+          #else
+            current_position[Z_AXIS] += SINGLENOZZLE_TOOLCHANGE_ZRAISE;
+          #endif
+
           planner.buffer_line(current_position, planner.max_feedrate_mm_s[Z_AXIS], active_extruder);
-          SERIAL_ECHOLNPAIR(MSG_ACTIVE_EXTRUDER, int(active_extruder));
-          //SERIAL_ECHOLNPAIR("current temp", int(thermalManager.target_temperature[active_extruder]));
-          //temp_storage[active_extruder] = thermalManager.target_temperature[active_extruder];
-          cooling_storage[active_extruder] = fanSpeeds[active_extruder];
-          SERIAL_ECHOLNPAIR("stored old temp", int(temp_storage[active_extruder]));
-          current_position[E_AXIS] -= filament_swap_length;      // Adjust the current E position by the amount to retract
-          planner.buffer_line(current_position, (planner.max_feedrate_mm_s[E_AXIS]/6), active_extruder);
-          //sync_plan_position_e();
-          // Set the new active extruder
+
+          #if ENABLED(SINGLENOZZLE_SWAP_PARK)
+            current_position[X_AXIS] = single_nozzle_change_point.x;
+            current_position[Y_AXIS] = single_nozzle_change_point.y;
+            planner.buffer_line(current_position, planner.max_feedrate_mm_s[Y_AXIS], active_extruder);
+          #endif
+
+          #if ENABLED(ADVANCED_PAUSE_FEATURE)
+            do_pause_e_move(-filament_swap_length, feedrate_e);
+          #else
+            current_position[E_AXIS] -= filament_swap_length / planner.e_factor[active_extruder];
+            planner.buffer_line(current_position, single_nozzle_retract_speed, active_extruder);
+          #endif
+
           active_extruder = tmp_extruder;
-          SERIAL_ECHOLNPAIR(MSG_ACTIVE_EXTRUDER, int(active_extruder));
-          SERIAL_ECHOLNPAIR("stored new temp", int(temp_storage[active_extruder]));
-          thermalManager.setTargetHotend(temp_storage[active_extruder], active_extruder);
-          fanSpeeds[active_extruder] = cooling_storage[active_extruder];
-          (void)thermalManager.wait_for_hotend(active_extruder, 0);
-          current_position[E_AXIS] += filament_swap_length;      // Adjust the current E position by the amount to prime
-          planner.buffer_line(current_position, (planner.max_feedrate_mm_s[E_AXIS] /6), active_extruder);
-          //sync_plan_position_e();
+          if(singlenozzle_temp[tmp_extruder]!=0 && singlenozzle_temp[tmp_extruder]!=singlenozzle_temp[active_extruder]) {
+            thermalManager.setTargetHotend(singlenozzle_temp[tmp_extruder], tmp_extruder);
+            (void)thermalManager.wait_for_hotend(tmp_extruder, false);  // Wait for heating or cooling
+          }
+
+          #if ENABLED(ADVANCED_PAUSE_FEATURE)
+            do_pause_e_move(filament_swap_length, feedrate_e);
+          #else
+            current_position[E_AXIS] += filament_swap_length / planner.e_factor[tmp_extruder];
+            planner.buffer_line(current_position, single_nozzle_prime_speed, tmp_extruder);
+          #endif
+
+          #if ENABLED(SINGLENOZZLE_SWAP_PARK)
+            current_position[X_AXIS] = destination[X_AXIS];
+            current_position[Y_AXIS] = destination[Y_AXIS];
+            planner.buffer_line(current_position, planner.max_feedrate_mm_s[Y_AXIS], active_extruder);
+          #endif
+
           do_blocking_move_to(destination[X_AXIS], destination[Y_AXIS], destination[Z_AXIS]);
 
-        #else
-          // Set the new active extruder
-          active_extruder = tmp_extruder;                                      // Sync the planner position so the material is moved
-        #endif
-      #endif
+        #else // !SINGLENOZZLE
+
+          active_extruder = tmp_extruder;
+
+        #endif // !SINGLENOZZLE
+
+      #endif // EXTRUDERS > 1
 
     #endif // HOTENDS <= 1
 

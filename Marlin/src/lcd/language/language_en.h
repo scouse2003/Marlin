@@ -648,9 +648,6 @@
 #ifndef MSG_E6STEPS
   #define MSG_E6STEPS                         _UxGT("E6steps/mm")
 #endif
-#ifndef MSG_E6STEPS
-  #define MSG_E6STEPS                         _UxGT("E6steps/mm")
-#endif
 #ifndef MSG_TEMPERATURE
   #define MSG_TEMPERATURE                     _UxGT("Temperature")
 #endif
@@ -772,7 +769,16 @@
   #define MSG_AUTORETRACT                     _UxGT("AutoRetr.")
 #endif
 #ifndef MSG_FILAMENT_SWAP_LENGTH
-  #define MSG_FILAMENT_SWAP_LENGTH            _UxGT("Tool Change Fil Len")
+  #define MSG_FILAMENT_SWAP_LENGTH            _UxGT("Retract Distance")
+#endif
+#ifndef MSG_SINGLE_NOZZLE_TOOL_CHANGE
+  #define MSG_SINGLE_NOZZLE_TOOL_CHANGE       _UxGT("Tool Change")
+#endif
+#ifndef MSG_SINGLE_NOZZLE_PRIME_SPD
+  #define MSG_SINGLE_NOZZLE_PRIME_SPD          _UxGT("Prime Speed")
+#endif
+#ifndef MSG_SINGLE_NOZZLE_RETRACT_SPD
+  #define MSG_SINGLE_NOZZLE_RETRACT_SPD         _UxGT("Retract Speed")
 #endif
 #ifndef MSG_FILAMENTCHANGE
   #define MSG_FILAMENTCHANGE                  _UxGT("Change filament")

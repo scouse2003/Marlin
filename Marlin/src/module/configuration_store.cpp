@@ -37,7 +37,7 @@
  */
 
 // Change EEPROM version if the structure changes
-#define EEPROM_VERSION "V59"
+#define EEPROM_VERSION "V60"
 #define EEPROM_OFFSET 0
 
 // Check the integrity of data offsets.
@@ -72,6 +72,9 @@
 
 #if HAS_SERVOS
   #include "servo.h"
+#else
+  #undef NUM_SERVOS
+  #define NUM_SERVOS NUM_SERVO_PLUGS
 #endif
 
 #if HAS_BED_PROBE
@@ -193,7 +196,7 @@ typedef struct SettingsDataStruct {
   //
   // SERVO_ANGLES
   //
-  uint16_t servo_angles[NUM_SERVO_PLUGS][2];                 // M281 P L U
+  uint16_t servo_angles[NUM_SERVOS][2];                 // M281 P L U
 
   //
   // DELTA / [XYZ]_DUAL_ENDSTOPS
@@ -219,8 +222,8 @@ typedef struct SettingsDataStruct {
   // ULTIPANEL
   //
   int16_t lcd_preheat_hotend_temp[2],                   // M145 S0 H
-          lcd_preheat_bed_temp[2],                      // M145 S0 B
-          lcd_preheat_fan_speed[2];                     // M145 S0 F
+          lcd_preheat_bed_temp[2];                      // M145 S0 B
+  uint8_t lcd_preheat_fan_speed[2];                     // M145 S0 F
 
   //
   // PIDTEMP
@@ -475,6 +478,7 @@ void MarlinSettings::postprocess() {
       _FIELD_TEST(filament_swap_length);
       EEPROM_WRITE(filament_swap_length);
     #endif
+
     //
     // Global Leveling
     //
@@ -574,7 +578,7 @@ void MarlinSettings::postprocess() {
       #if ENABLED(SWITCHING_EXTRUDER)
         constexpr uint16_t sesa[][2] = SWITCHING_EXTRUDER_SERVO_ANGLES;
       #endif
-      constexpr uint16_t servo_angles[NUM_SERVO_PLUGS][2] = {
+      constexpr uint16_t servo_angles[NUM_SERVOS][2] = {
         #if ENABLED(SWITCHING_EXTRUDER)
           [SWITCHING_EXTRUDER_SERVO_NR] = { sesa[0][0], sesa[0][1] }
           #if EXTRUDERS > 3
@@ -639,8 +643,8 @@ void MarlinSettings::postprocess() {
 
     #if DISABLED(ULTIPANEL)
       constexpr int16_t lcd_preheat_hotend_temp[2] = { PREHEAT_1_TEMP_HOTEND, PREHEAT_2_TEMP_HOTEND },
-                        lcd_preheat_bed_temp[2] = { PREHEAT_1_TEMP_BED, PREHEAT_2_TEMP_BED },
-                        lcd_preheat_fan_speed[2] = { PREHEAT_1_FAN_SPEED, PREHEAT_2_FAN_SPEED };
+                        lcd_preheat_bed_temp[2] = { PREHEAT_1_TEMP_BED, PREHEAT_2_TEMP_BED };
+      constexpr uint8_t lcd_preheat_fan_speed[2] = { PREHEAT_1_FAN_SPEED, PREHEAT_2_FAN_SPEED };
     #endif
 
     EEPROM_WRITE(lcd_preheat_hotend_temp);
@@ -889,6 +893,7 @@ void MarlinSettings::postprocess() {
     //
     // Linear Advance
     //
+
     _FIELD_TEST(planner_extruder_advance_K);
 
     #if ENABLED(LIN_ADVANCE)
@@ -899,6 +904,10 @@ void MarlinSettings::postprocess() {
     #endif
 
     _FIELD_TEST(motor_current_setting);
+
+    //
+    // Motor Current PWM
+    //
 
     #if HAS_MOTOR_CURRENT_PWM
       for (uint8_t q = XYZ; q--;) EEPROM_WRITE(stepper.motor_current_setting[q]);
@@ -1192,7 +1201,7 @@ void MarlinSettings::postprocess() {
       // SERVO_ANGLES
       //
       #if !HAS_SERVOS || DISABLED(EDITABLE_SERVO_ANGLES)
-        uint16_t servo_angles[NUM_SERVO_PLUGS][2];
+        uint16_t servo_angles[NUM_SERVOS][2];
       #endif
       EEPROM_READ(servo_angles);
 
@@ -1246,16 +1255,12 @@ void MarlinSettings::postprocess() {
       _FIELD_TEST(lcd_preheat_hotend_temp);
 
       #if DISABLED(ULTIPANEL)
-        int16_t lcd_preheat_hotend_temp[2], lcd_preheat_bed_temp[2], lcd_preheat_fan_speed[2];
+        int16_t lcd_preheat_hotend_temp[2], lcd_preheat_bed_temp[2];
+        uint8_t lcd_preheat_fan_speed[2];
       #endif
       EEPROM_READ(lcd_preheat_hotend_temp); // 2 floats
       EEPROM_READ(lcd_preheat_bed_temp);    // 2 floats
       EEPROM_READ(lcd_preheat_fan_speed);   // 2 floats
-
-      //EEPROM_ASSERT(
-      //  WITHIN(lcd_preheat_fan_speed, 0, 255),
-      //  "lcd_preheat_fan_speed out of range"
-      //);
 
       //
       // Hotend PID
@@ -1424,6 +1429,8 @@ void MarlinSettings::postprocess() {
         for (uint8_t q=TMC_AXES; q--;) EEPROM_READ(val);
       #endif
 
+      _FIELD_TEST(tmc_hybrid_threshold);
+
       #if ENABLED(HYBRID_THRESHOLD)
         #define TMC_SET_PWMTHRS(A,Q) tmc_set_pwmthrs(stepper##Q, tmc_hybrid_threshold.Q, planner.axis_steps_per_mm[_AXIS(A)])
         tmc_hybrid_threshold_t tmc_hybrid_threshold;
@@ -1474,12 +1481,15 @@ void MarlinSettings::postprocess() {
         for (uint8_t q=TMC_AXES; q--;) EEPROM_READ(thrs_val);
       #endif
 
-      /*
+      /**
        * TMC StallGuard threshold.
        * X and X2 use the same value
        * Y and Y2 use the same value
        * Z, Z2 and Z3 use the same value
        */
+
+      _FIELD_TEST(tmc_sgt);
+
       tmc_sgt_t tmc_sgt;
       EEPROM_READ(tmc_sgt);
       #if USE_SENSORLESS
@@ -1848,8 +1858,9 @@ void MarlinSettings::reset(PORTARG_SOLO) {
   #endif
 
   #if ENABLED(SINGLENOZZLE)
-    filament_swap_length = SINGLENOZZLE_FILAMENTLENGTH;
+    filament_swap_length = SINGLENOZZLE_SWAP_LENGTH;
   #endif
+
   //
   // Global Leveling
   //
@@ -2495,7 +2506,7 @@ void MarlinSettings::reset(PORTARG_SOLO) {
         SERIAL_ECHOPAIR_P(port, "  M145 S", (int)i);
         SERIAL_ECHOPAIR_P(port, " H", TEMP_UNIT(lcd_preheat_hotend_temp[i]));
         SERIAL_ECHOPAIR_P(port, " B", TEMP_UNIT(lcd_preheat_bed_temp[i]));
-        SERIAL_ECHOLNPAIR_P(port, " F", lcd_preheat_fan_speed[i]);
+        SERIAL_ECHOLNPAIR_P(port, " F", int(lcd_preheat_fan_speed[i]));
       }
     #endif // ULTIPANEL
 
