@@ -30,14 +30,17 @@
 #include "../Marlin.h"
 
 #if ENABLED(SINGLENOZZLE)
-  float filament_swap_length;
+  float singlenozzle_swap_length    = SINGLENOZZLE_SWAP_LENGTH,
+        singlenozzle_prime_speed    = SINGLENOZZLE_SWAP_PRIME_SPEED,
+        singlenozzle_retract_speed  = SINGLENOZZLE_SWAP_RETRACT_SPEED;
+  #if ENABLED(SINGLENOZZLE_SWAP_PARK)
+    #include "../libs/point_t.h"
+    const point_t singlenozzle_change_point = SINGLENOZZLE_TOOLCHANGE_POSITION;
+  #endif
   uint16_t singlenozzle_temp[EXTRUDERS];
   #if FAN_COUNT > 0
     uint8_t singlenozzle_fan_speed[EXTRUDERS];
   #endif
-  point_t single_nozzle_change_point = SINGLENOZZLE_TOOLCHANGE_POSITION;
-  float single_nozzle_prime_speed = SINGLENOZZLE_SWAP_PRIME_SPEED;
-  float single_nozzle_retract_speed = SINGLENOZZLE_SWAP_RETRACT_SPEED;
 #endif
 
 #if ENABLED(PARKING_EXTRUDER) && PARKING_EXTRUDER_SOLENOIDS_DELAY > 0
@@ -653,48 +656,57 @@ void tool_change(const uint8_t tmp_extruder, const float fr_mm_s/*=0.0*/, bool n
             }
           #endif
 
-          const float feedrate_e = planner.max_feedrate_mm_s[E_AXIS] / 6.0f;
-
           #if FAN_COUNT > 0
-            singlenozzle_fanspeed[active_extruder] = fanSpeeds[0];
-            fanSpeeds[0] = singlenozzle_fanspeed[tmp_extruder];
+            singlenozzle_fan_speed[active_extruder] = fan_speed[0];
+            fan_speed[0] = singlenozzle_fan_speed[tmp_extruder];
           #endif
 
           set_destination_from_current();
 
-          #if ENABLED(SINGLENOZZLE_SWAP_PARK)
-            current_position[Z_AXIS] += single_nozzle_change_point.z;
-          #else
-            current_position[Z_AXIS] += SINGLENOZZLE_TOOLCHANGE_ZRAISE;
-          #endif
+          current_position[Z_AXIS] += (
+            #if ENABLED(SINGLENOZZLE_SWAP_PARK)
+              singlenozzle_change_point.z
+            #else
+              SINGLENOZZLE_TOOLCHANGE_ZRAISE
+            #endif
+          );
 
           planner.buffer_line(current_position, planner.max_feedrate_mm_s[Z_AXIS], active_extruder);
 
           #if ENABLED(SINGLENOZZLE_SWAP_PARK)
-            current_position[X_AXIS] = single_nozzle_change_point.x;
-            current_position[Y_AXIS] = single_nozzle_change_point.y;
+            current_position[X_AXIS] = singlenozzle_change_point.x;
+            current_position[Y_AXIS] = singlenozzle_change_point.y;
             planner.buffer_line(current_position, planner.max_feedrate_mm_s[Y_AXIS], active_extruder);
           #endif
 
-          #if ENABLED(ADVANCED_PAUSE_FEATURE)
-            do_pause_e_move(-filament_swap_length, feedrate_e);
-          #else
-            current_position[E_AXIS] -= filament_swap_length / planner.e_factor[active_extruder];
-            planner.buffer_line(current_position, single_nozzle_retract_speed, active_extruder);
-          #endif
-
-          active_extruder = tmp_extruder;
-          if(singlenozzle_temp[tmp_extruder]!=0 && singlenozzle_temp[tmp_extruder]!=singlenozzle_temp[active_extruder]) {
-            thermalManager.setTargetHotend(singlenozzle_temp[tmp_extruder], tmp_extruder);
-            (void)thermalManager.wait_for_hotend(tmp_extruder, false);  // Wait for heating or cooling
+          if (singlenozzle_swap_length) {
+            #if ENABLED(ADVANCED_PAUSE_FEATURE)
+              do_pause_e_move(-singlenozzle_swap_length, singlenozzle_retract_speed);
+            #else
+              current_position[E_AXIS] -= singlenozzle_swap_length / planner.e_factor[active_extruder];
+              planner.buffer_line(current_position, singlenozzle_retract_speed, active_extruder);
+            #endif
           }
 
-          #if ENABLED(ADVANCED_PAUSE_FEATURE)
-            do_pause_e_move(filament_swap_length, feedrate_e);
-          #else
-            current_position[E_AXIS] += filament_swap_length / planner.e_factor[tmp_extruder];
-            planner.buffer_line(current_position, single_nozzle_prime_speed, tmp_extruder);
-          #endif
+          singlenozzle_temp[active_extruder] = thermalManager.target_temperature[0];
+          if (singlenozzle_temp[tmp_extruder] && singlenozzle_temp[tmp_extruder] != singlenozzle_temp[active_extruder]) {
+            thermalManager.setTargetHotend(singlenozzle_temp[tmp_extruder], 0);
+            #if ENABLED(ULTRA_LCD)
+              thermalManager.set_heating_message(0);
+            #endif
+            (void)thermalManager.wait_for_hotend(0, false);  // Wait for heating or cooling
+          }
+
+          active_extruder = tmp_extruder;
+
+          if (singlenozzle_swap_length) {
+            #if ENABLED(ADVANCED_PAUSE_FEATURE)
+              do_pause_e_move(singlenozzle_swap_length, singlenozzle_prime_speed);
+            #else
+              current_position[E_AXIS] += singlenozzle_swap_length / planner.e_factor[tmp_extruder];
+              planner.buffer_line(current_position, singlenozzle_prime_speed, tmp_extruder);
+            #endif
+          }
 
           #if ENABLED(SINGLENOZZLE_SWAP_PARK)
             current_position[X_AXIS] = destination[X_AXIS];

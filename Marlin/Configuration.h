@@ -381,11 +381,11 @@
 // For Cyclops or any "multi-extruder" that shares a single nozzle.
 #if(ENABLED(Dual_BowdenSplitterY) || ENABLED(Dual_CyclopsSingleNozzle))
   #define SINGLENOZZLE
-  #if ENABLED(SINGLENOZZLE)
+#if ENABLED(SINGLENOZZLE)
   // Length of filament to retract and prime on toolchange
   #define SINGLENOZZLE_SWAP_LENGTH 80.0
-  #define SINGLENOZZLE_SWAP_RETRACT_SPEED 60.0 // Retracting speed in mm/s
-  #define SINGLENOZZLE_SWAP_PRIME_SPEED 60.0 // Prime speed in mm/s
+  #define SINGLENOZZLE_SWAP_RETRACT_SPEED 60.0  // (mm/s)
+  #define SINGLENOZZLE_SWAP_PRIME_SPEED 60.0    // (mm/s)
   #define SINGLENOZZLE_SWAP_PARK
   #if ENABLED(SINGLENOZZLE_SWAP_PARK)
     #define SINGLENOZZLE_TOOLCHANGE_POSITION { (X_MIN_POS + 10), (Y_MIN_POS + 10), 5 }

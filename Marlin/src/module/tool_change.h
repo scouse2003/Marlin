@@ -51,13 +51,11 @@
 #endif // PARKING_EXTRUDER
 
 #if ENABLED(SINGLENOZZLE)
-  extern float filament_swap_length;
+  extern float singlenozzle_swap_length, singlenozzle_prime_speed, singlenozzle_retract_speed;
   extern uint16_t singlenozzle_temp[EXTRUDERS];
   #if FAN_COUNT > 0
     extern uint8_t singlenozzle_fan_speed[EXTRUDERS];
   #endif
-  point_t single_nozzle_change_point;
-  extern float single_nozzle_prime_speed, single_nozzle_retract_speed;
 #endif
 
 /**

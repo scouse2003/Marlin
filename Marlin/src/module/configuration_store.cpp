@@ -145,7 +145,9 @@ typedef struct SettingsDataStruct {
   #endif
 
   #if ENABLED(SINGLENOZZLE)
-    float filament_swap_length;
+    float singlenozzle_swap_length;
+    float singlenozzle_prime_speed;
+    float singlenozzle_retract_speed;
   #endif
 
   //
@@ -475,8 +477,12 @@ void MarlinSettings::postprocess() {
     #endif
 
     #if ENABLED(SINGLENOZZLE)
-      _FIELD_TEST(filament_swap_length);
-      EEPROM_WRITE(filament_swap_length);
+      _FIELD_TEST(singlenozzle_swap_length);
+      EEPROM_WRITE(singlenozzle_swap_length);
+      _FIELD_TEST(singlenozzle_prime_speed);
+      EEPROM_WRITE(singlenozzle_prime_speed);
+      _FIELD_TEST(singlenozzle_retract_speed);
+      EEPROM_WRITE(singlenozzle_retract_speed);
     #endif
 
     //
@@ -1103,7 +1109,9 @@ void MarlinSettings::postprocess() {
       #endif
 
       #if ENABLED(SINGLENOZZLE)
-        EEPROM_READ(filament_swap_length);
+        EEPROM_READ(singlenozzle_swap_length);
+        EEPROM_READ(singlenozzle_prime_speed);
+        EEPROM_READ(singlenozzle_retract_speed);
       #endif
 
       //
@@ -1858,7 +1866,9 @@ void MarlinSettings::reset(PORTARG_SOLO) {
   #endif
 
   #if ENABLED(SINGLENOZZLE)
-    filament_swap_length = SINGLENOZZLE_SWAP_LENGTH;
+    singlenozzle_swap_length = SINGLENOZZLE_SWAP_LENGTH;
+    singlenozzle_prime_speed = SINGLENOZZLE_SWAP_PRIME_SPEED;
+    singlenozzle_retract_speed = SINGLENOZZLE_SWAP_RETRACT_SPEED;
   #endif
 
   //

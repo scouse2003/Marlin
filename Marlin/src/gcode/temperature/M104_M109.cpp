@@ -119,13 +119,8 @@ void GcodeSuite::M109() {
     #endif
 
     #if ENABLED(ULTRA_LCD)
-      const bool heating = thermalManager.isHeatingHotend(target_extruder);
-      if (heating || !no_wait_for_cooling)
-        #if HOTENDS > 1
-          lcd_status_printf_P(0, heating ? PSTR("E%i " MSG_HEATING) : PSTR("E%i " MSG_COOLING), target_extruder + 1);
-        #else
-          lcd_setstatusPGM(heating ? PSTR("E " MSG_HEATING) : PSTR("E " MSG_COOLING));
-        #endif
+      if (thermalManager.isHeatingHotend(target_extruder) || !no_wait_for_cooling)
+        thermalManager.set_heating_message(target_extruder);
     #endif
   }
 

@@ -101,7 +101,7 @@ void GcodeSuite::M81() {
     for (uint8_t i = 0; i < FAN_COUNT; i++) fan_speed[i] = 0;
     #if ENABLED(PROBING_FANS_OFF)
       fans_paused = false;
-      ZERO(paused_fanSpeeds);
+      ZERO(paused_fan_speed);
     #endif
   #endif
 

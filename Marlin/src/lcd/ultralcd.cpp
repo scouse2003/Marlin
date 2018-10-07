@@ -975,15 +975,12 @@ void lcd_quick_feedback(const bool clear_buttons) {
   #endif // POWER_LOSS_RECOVERY
 
   #if ENABLED(SINGLENOZZLE)
-    void single_nozzle_swap_menu() {
+    void singlenozzle_swap_menu() {
       START_MENU();
-      //
-      // ^ Main
-      //
       MENU_BACK(MSG_MAIN);
-      MENU_ITEM_EDIT(float3, MSG_FILAMENT_SWAP_LENGTH, &filament_swap_length, 0, 200);
-      MENU_ITEM_EDIT(float3, MSG_SINGLE_NOZZLE_RETRACT_SPD, &single_nozzle_retract_speed, 0, 90);
-      MENU_ITEM_EDIT(float3, MSG_SINGLE_NOZZLE_PRIME_SPD, &single_nozzle_prime_speed, 0, 90);
+      MENU_ITEM_EDIT(float3, MSG_FILAMENT_SWAP_LENGTH, &singlenozzle_swap_length, 0, 200);
+      MENU_ITEM_EDIT(float3, MSG_SINGLENOZZLE_RETRACT_SPD, &singlenozzle_retract_speed, 0, 90);
+      MENU_ITEM_EDIT(float3, MSG_SINGLENOZZLE_PRIME_SPD, &singlenozzle_prime_speed, 0, 90);
       END_MENU();
     }
   #endif
@@ -994,9 +991,6 @@ void lcd_quick_feedback(const bool clear_buttons) {
 
     void case_light_menu() {
       START_MENU();
-      //
-      // ^ Main
-      //
       MENU_BACK(MSG_MAIN);
       MENU_ITEM_EDIT_CALLBACK(int8, MSG_CASE_LIGHT_BRIGHTNESS, &case_light_brightness, 0, 255, update_case_light, true);
       MENU_ITEM_EDIT_CALLBACK(bool, MSG_CASE_LIGHT, (bool*)&case_light_on, update_case_light);
@@ -1013,9 +1007,6 @@ void lcd_quick_feedback(const bool clear_buttons) {
      */
     static void bltouch_menu() {
       START_MENU();
-      //
-      // ^ Main
-      //
       MENU_BACK(MSG_MAIN);
       MENU_ITEM(gcode, MSG_BLTOUCH_RESET, PSTR("M280 P" STRINGIFY(Z_PROBE_SERVO_NR) " S" STRINGIFY(BLTOUCH_RESET)));
       MENU_ITEM(gcode, MSG_BLTOUCH_SELFTEST, PSTR("M280 P" STRINGIFY(Z_PROBE_SERVO_NR) " S" STRINGIFY(BLTOUCH_SELFTEST)));
@@ -1056,7 +1047,7 @@ void lcd_quick_feedback(const bool clear_buttons) {
     void lcd_debug_menu() {
       START_MENU();
 
-      MENU_BACK(MSG_MAIN); // ^ Main
+      MENU_BACK(MSG_MAIN);
 
       #if ENABLED(LCD_PROGRESS_BAR_TEST)
         MENU_ITEM(submenu, MSG_PROGRESS_BAR_TEST, _progress_bar_test);
@@ -1508,10 +1499,6 @@ void lcd_quick_feedback(const bool clear_buttons) {
    */
   void lcd_tune_menu() {
     START_MENU();
-
-    //
-    // ^ Main
-    //
     MENU_BACK(MSG_MAIN);
 
     //
@@ -3456,7 +3443,7 @@ void lcd_quick_feedback(const bool clear_buttons) {
     // Set single nozzle filament retract and prime length
     //
     #if ENABLED(SINGLENOZZLE)
-      MENU_ITEM(submenu, MSG_SINGLE_NOZZLE_TOOL_CHANGE, single_nozzle_swap_menu);
+      MENU_ITEM(submenu, MSG_SINGLENOZZLE_TOOL_CHANGE, singlenozzle_swap_menu);
     #endif
 
     //
