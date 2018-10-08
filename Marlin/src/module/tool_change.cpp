@@ -149,6 +149,13 @@
         if (DEBUGGING(LEVELING)) DEBUG_POS("Start Autopark", current_position);
       #endif
       current_position[Z_AXIS] += PARKING_EXTRUDER_SECURITY_RAISE;
+      #if HAS_SOFTWARE_ENDSTOPS
+        if (!WITHIN(current_position[Z_AXIS], soft_endstop_min[Z_AXIS], soft_endstop_max[Z_AXIS]))
+          NOMORE(current_position[Z_AXIS], soft_endstop_max[Z_AXIS]);
+      #else
+        if (!WITHIN(current_position[Z_AXIS], Z_MIN_POS, Z_MAX_POS))
+          NOMORE(current_position[Z_AXIS], Z_MAX_POS);
+      #endif
       #if ENABLED(DEBUG_LEVELING_FEATURE)
         if (DEBUGGING(LEVELING)) DEBUG_POS("(1) Raise Z-Axis", current_position);
       #endif
@@ -157,6 +164,19 @@
 
       // STEP 2
       current_position[X_AXIS] = parkingposx[active_extruder] + hotend_offset[X_AXIS][active_extruder];
+      #if HAS_SOFTWARE_ENDSTOPS
+        if (!WITHIN(current_position[X_AXIS], soft_endstop_min[X_AXIS], soft_endstop_max[X_AXIS]))
+        {
+          NOMORE(current_position[X_AXIS], soft_endstop_max[X_AXIS]);
+          NOLESS(current_position[X_AXIS], soft_endstop_min[X_AXIS]);
+        }
+      #else
+        if (!WITHIN(current_position[X_AXIS], X_MIN_POS, X_MAX_POS))
+        {
+          NOMORE(current_position[X_AXIS], X_MAX_POS);
+          NOLESS(current_position[X_AXIS], X_MIN_POS);
+        }
+      #endif
       #if ENABLED(DEBUG_LEVELING_FEATURE)
         if (DEBUGGING(LEVELING)) {
           SERIAL_ECHOLNPAIR("(2) Park extruder ", int(active_extruder));
@@ -178,6 +198,20 @@
       #endif
       current_position[X_AXIS] += active_extruder ? -10 : 10; // move 10mm away from parked extruder
 
+      #if HAS_SOFTWARE_ENDSTOPS
+        if (!WITHIN(current_position[X_AXIS], soft_endstop_min[X_AXIS], soft_endstop_max[X_AXIS]))
+        {
+          NOMORE(current_position[X_AXIS], soft_endstop_max[X_AXIS]);
+          NOLESS(current_position[X_AXIS], soft_endstop_min[X_AXIS]);
+        }
+      #else
+        if (!WITHIN(current_position[X_AXIS], X_MIN_POS, X_MAX_POS))
+        {
+          NOMORE(current_position[X_AXIS], X_MAX_POS);
+          NOLESS(current_position[X_AXIS], X_MIN_POS);
+        }
+      #endif
+
       #if ENABLED(DEBUG_LEVELING_FEATURE)
         if (DEBUGGING(LEVELING)) DEBUG_POS("Move away from parked extruder", current_position);
       #endif
@@ -196,8 +230,34 @@
 
       // STEP 6
       current_position[X_AXIS] = grabpos + (tmp_extruder ? -10 : 10);
+      #if HAS_SOFTWARE_ENDSTOPS
+        if (!WITHIN(current_position[X_AXIS], soft_endstop_min[X_AXIS], soft_endstop_max[X_AXIS]))
+        {
+          NOMORE(current_position[X_AXIS], soft_endstop_max[X_AXIS]);
+          NOLESS(current_position[X_AXIS], soft_endstop_min[X_AXIS]);
+        }
+      #else
+        if (!WITHIN(current_position[X_AXIS], X_MIN_POS, X_MAX_POS))
+        {
+          NOMORE(current_position[X_AXIS], X_MAX_POS);
+          NOLESS(current_position[X_AXIS], X_MIN_POS);
+        }
+      #endif
       planner.buffer_line(current_position, planner.max_feedrate_mm_s[X_AXIS], active_extruder);
       current_position[X_AXIS] = grabpos;
+      #if HAS_SOFTWARE_ENDSTOPS
+        if (!WITHIN(current_position[X_AXIS], soft_endstop_min[X_AXIS], soft_endstop_max[X_AXIS]))
+        {
+          NOMORE(current_position[X_AXIS], soft_endstop_max[X_AXIS]);
+          NOLESS(current_position[X_AXIS], soft_endstop_min[X_AXIS]);
+        }
+      #else
+        if (!WITHIN(current_position[X_AXIS], X_MIN_POS, X_MAX_POS))
+        {
+          NOMORE(current_position[X_AXIS], X_MAX_POS);
+          NOLESS(current_position[X_AXIS], X_MIN_POS);
+        }
+      #endif
       #if ENABLED(DEBUG_LEVELING_FEATURE)
         if (DEBUGGING(LEVELING)) DEBUG_POS("(6) Unpark extruder", current_position);
       #endif
@@ -206,6 +266,19 @@
 
       // Step 7
       current_position[X_AXIS] = midpos - hotend_offset[X_AXIS][tmp_extruder];
+      #if HAS_SOFTWARE_ENDSTOPS
+        if (!WITHIN(current_position[X_AXIS], soft_endstop_min[X_AXIS], soft_endstop_max[X_AXIS]))
+        {
+          NOMORE(current_position[X_AXIS], soft_endstop_max[X_AXIS]);
+          NOLESS(current_position[X_AXIS], soft_endstop_min[X_AXIS]);
+        }
+      #else
+        if (!WITHIN(current_position[X_AXIS], X_MIN_POS, X_MAX_POS))
+        {
+          NOMORE(current_position[X_AXIS], X_MAX_POS);
+          NOLESS(current_position[X_AXIS], X_MIN_POS);
+        }
+      #endif
       #if ENABLED(DEBUG_LEVELING_FEATURE)
         if (DEBUGGING(LEVELING)) DEBUG_POS("(7) Move midway between hotends", current_position);
       #endif
@@ -223,7 +296,19 @@
       #endif
     }
     current_position[Z_AXIS] += hotend_offset[Z_AXIS][active_extruder] - hotend_offset[Z_AXIS][tmp_extruder];
-
+    #if HAS_SOFTWARE_ENDSTOPS
+      if (!WITHIN(current_position[Z_AXIS], soft_endstop_min[Z_AXIS], soft_endstop_max[Z_AXIS]))
+      {
+        NOMORE(current_position[Z_AXIS], soft_endstop_max[Z_AXIS]);
+        NOLESS(current_position[Z_AXIS], soft_endstop_min[Z_AXIS]);
+      }
+    #else
+      if (!WITHIN(current_position[Z_AXIS], Z_MIN_POS, Z_MAX_POS))
+      {
+        NOMORE(current_position[Z_AXIS], Z_MAX_POS);
+        NOLESS(current_position[Z_AXIS], Z_MIN_POS);
+      }
+    #endif
     #if ENABLED(DEBUG_LEVELING_FEATURE)
       if (DEBUGGING(LEVELING)) DEBUG_POS("Applying Z-offset", current_position);
     #endif
@@ -256,6 +341,13 @@
       if (DEBUGGING(LEVELING)) DEBUG_POS("Starting Toolhead change", current_position);
     #endif
     current_position[Z_AXIS] += SWITCHING_TOOLHEAD_SECURITY_RAISE;
+    #if HAS_SOFTWARE_ENDSTOPS
+      if (!WITHIN(current_position[Z_AXIS], soft_endstop_min[Z_AXIS], soft_endstop_max[Z_AXIS]))
+        NOMORE(current_position[Z_AXIS], soft_endstop_max[Z_AXIS]);
+    #else
+      if (!WITHIN(current_position[Z_AXIS], Z_MIN_POS, Z_MAX_POS))
+        NOMORE(current_position[Z_AXIS], Z_MAX_POS);
+    #endif
     #if ENABLED(DEBUG_LEVELING_FEATURE)
       if (DEBUGGING(LEVELING)) DEBUG_POS("(1) Raise Z-Axis", current_position);
     #endif
@@ -264,6 +356,19 @@
 
     // STEP 2
     current_position[X_AXIS] = placexpos;
+    #if HAS_SOFTWARE_ENDSTOPS
+      if (!WITHIN(current_position[X_AXIS], soft_endstop_min[X_AXIS], soft_endstop_max[X_AXIS]))
+      {
+        NOMORE(current_position[X_AXIS], soft_endstop_max[X_AXIS]);
+        NOLESS(current_position[X_AXIS], soft_endstop_min[X_AXIS]);
+      }
+    #else
+      if (!WITHIN(current_position[X_AXIS], X_MIN_POS, X_MAX_POS))
+      {
+        NOMORE(current_position[X_AXIS], X_MAX_POS);
+        NOLESS(current_position[X_AXIS], X_MIN_POS);
+      }
+    #endif
     #if ENABLED(DEBUG_LEVELING_FEATURE)
       if (DEBUGGING(LEVELING)) {
         SERIAL_ECHOLNPAIR("(2) Place old tool ", int(active_extruder));
@@ -274,6 +379,19 @@
     planner.synchronize();
 
     current_position[Y_AXIS] = SWITCHING_TOOLHEAD_Y_POS - SWITCHING_TOOLHEAD_Y_SECURITY;
+    #if HAS_SOFTWARE_ENDSTOPS
+      if (!WITHIN(current_position[Y_AXIS], soft_endstop_min[Y_AXIS], soft_endstop_max[Y_AXIS]))
+      {
+        NOMORE(current_position[Y_AXIS], soft_endstop_max[Y_AXIS]);
+        NOLESS(current_position[Y_AXIS], soft_endstop_min[Y_AXIS]);
+      }
+    #else
+      if (!WITHIN(current_position[Y_AXIS], Y_MIN_POS, Y_MAX_POS))
+      {
+        NOMORE(current_position[Y_AXIS], Y_MAX_POS);
+        NOLESS(current_position[Y_AXIS], Y_MIN_POS);
+      }
+    #endif
     #if ENABLED(DEBUG_LEVELING_FEATURE)
       if (DEBUGGING(LEVELING)) DEBUG_POS("Move Y SwitchPos + Security", current_position);
     #endif
@@ -288,6 +406,19 @@
     safe_delay(500);
 
     current_position[Y_AXIS] = SWITCHING_TOOLHEAD_Y_POS;
+    #if HAS_SOFTWARE_ENDSTOPS
+      if (!WITHIN(current_position[Y_AXIS], soft_endstop_min[Y_AXIS], soft_endstop_max[Y_AXIS]))
+      {
+        NOMORE(current_position[Y_AXIS], soft_endstop_max[Y_AXIS]);
+        NOLESS(current_position[Y_AXIS], soft_endstop_min[Y_AXIS]);
+      }
+    #else
+      if (!WITHIN(current_position[Y_AXIS], Y_MIN_POS, Y_MAX_POS))
+      {
+        NOMORE(current_position[Y_AXIS], Y_MAX_POS);
+        NOLESS(current_position[Y_AXIS], Y_MIN_POS);
+      }
+    #endif
     #if ENABLED(DEBUG_LEVELING_FEATURE)
       if (DEBUGGING(LEVELING)) DEBUG_POS("Move Y SwitchPos", current_position);
     #endif
@@ -295,6 +426,19 @@
     planner.synchronize();
     safe_delay(200);
     current_position[Y_AXIS] -= SWITCHING_TOOLHEAD_Y_CLEAR;
+    #if HAS_SOFTWARE_ENDSTOPS
+      if (!WITHIN(current_position[Y_AXIS], soft_endstop_min[Y_AXIS], soft_endstop_max[Y_AXIS]))
+      {
+        NOMORE(current_position[Y_AXIS], soft_endstop_max[Y_AXIS]);
+        NOLESS(current_position[Y_AXIS], soft_endstop_min[Y_AXIS]);
+      }
+    #else
+      if (!WITHIN(current_position[Y_AXIS], Y_MIN_POS, Y_MAX_POS))
+      {
+        NOMORE(current_position[Y_AXIS], Y_MAX_POS);
+        NOLESS(current_position[Y_AXIS], Y_MIN_POS);
+      }
+    #endif
     #if ENABLED(DEBUG_LEVELING_FEATURE)
       if (DEBUGGING(LEVELING)) DEBUG_POS("Move back Y clear", current_position);
     #endif
@@ -306,12 +450,38 @@
       if (DEBUGGING(LEVELING)) SERIAL_ECHOLNPGM("(4) Move to new toolhead position");
     #endif
     current_position[X_AXIS] = grabxpos;
+    #if HAS_SOFTWARE_ENDSTOPS
+      if (!WITHIN(current_position[X_AXIS], soft_endstop_min[X_AXIS], soft_endstop_max[X_AXIS]))
+      {
+        NOMORE(current_position[X_AXIS], soft_endstop_max[X_AXIS]);
+        NOLESS(current_position[X_AXIS], soft_endstop_min[X_AXIS]);
+      }
+    #else
+      if (!WITHIN(current_position[X_AXIS], X_MIN_POS, X_MAX_POS))
+      {
+        NOMORE(current_position[X_AXIS], X_MAX_POS);
+        NOLESS(current_position[X_AXIS], X_MIN_POS);
+      }
+    #endif
     #if ENABLED(DEBUG_LEVELING_FEATURE)
       if (DEBUGGING(LEVELING)) DEBUG_POS("Move to new toolhead X", current_position);
     #endif
     planner.buffer_line(current_position, planner.max_feedrate_mm_s[X_AXIS], active_extruder);
     planner.synchronize();
     current_position[Y_AXIS] = SWITCHING_TOOLHEAD_Y_POS - SWITCHING_TOOLHEAD_Y_SECURITY;
+    #if HAS_SOFTWARE_ENDSTOPS
+      if (!WITHIN(current_position[Y_AXIS], soft_endstop_min[Y_AXIS], soft_endstop_max[Y_AXIS]))
+      {
+        NOMORE(current_position[Y_AXIS], soft_endstop_max[Y_AXIS]);
+        NOLESS(current_position[Y_AXIS], soft_endstop_min[Y_AXIS]);
+      }
+    #else
+      if (!WITHIN(current_position[Y_AXIS], Y_MIN_POS, Y_MAX_POS))
+      {
+        NOMORE(current_position[Y_AXIS], Y_MAX_POS);
+        NOLESS(current_position[Y_AXIS], Y_MIN_POS);
+      }
+    #endif
     #if ENABLED(DEBUG_LEVELING_FEATURE)
       if (DEBUGGING(LEVELING)) DEBUG_POS("Move Y SwitchPos + Security", current_position);
     #endif
@@ -323,6 +493,19 @@
       if (DEBUGGING(LEVELING)) SERIAL_ECHOLNPGM("(5) Grab and lock new toolhead ");
     #endif
     current_position[Y_AXIS] = SWITCHING_TOOLHEAD_Y_POS;
+    #if HAS_SOFTWARE_ENDSTOPS
+      if (!WITHIN(current_position[Y_AXIS], soft_endstop_min[Y_AXIS], soft_endstop_max[Y_AXIS]))
+      {
+        NOMORE(current_position[Y_AXIS], soft_endstop_max[Y_AXIS]);
+        NOLESS(current_position[Y_AXIS], soft_endstop_min[Y_AXIS]);
+      }
+    #else
+      if (!WITHIN(current_position[Y_AXIS], Y_MIN_POS, Y_MAX_POS))
+      {
+        NOMORE(current_position[Y_AXIS], Y_MAX_POS);
+        NOLESS(current_position[Y_AXIS], Y_MIN_POS);
+      }
+    #endif
     #if ENABLED(DEBUG_LEVELING_FEATURE)
       if (DEBUGGING(LEVELING)) DEBUG_POS("Move Y SwitchPos", current_position);
     #endif
@@ -334,6 +517,19 @@
     safe_delay(500);
 
     current_position[Y_AXIS] -= SWITCHING_TOOLHEAD_Y_CLEAR;
+    #if HAS_SOFTWARE_ENDSTOPS
+      if (!WITHIN(current_position[Y_AXIS], soft_endstop_min[Y_AXIS], soft_endstop_max[Y_AXIS]))
+      {
+        NOMORE(current_position[Y_AXIS], soft_endstop_max[Y_AXIS]);
+        NOLESS(current_position[Y_AXIS], soft_endstop_min[Y_AXIS]);
+      }
+    #else
+      if (!WITHIN(current_position[Y_AXIS], Y_MIN_POS, Y_MAX_POS))
+      {
+        NOMORE(current_position[Y_AXIS], Y_MAX_POS);
+        NOLESS(current_position[Y_AXIS], Y_MIN_POS);
+      }
+    #endif
     #if ENABLED(DEBUG_LEVELING_FEATURE)
       if (DEBUGGING(LEVELING)) DEBUG_POS("Move back Y clear", current_position);
     #endif
@@ -342,6 +538,19 @@
 
     // STEP 6
     current_position[Z_AXIS] += hotend_offset[Z_AXIS][active_extruder] - hotend_offset[Z_AXIS][tmp_extruder];
+    #if HAS_SOFTWARE_ENDSTOPS
+      if (!WITHIN(current_position[Z_AXIS], soft_endstop_min[Z_AXIS], soft_endstop_max[Z_AXIS]))
+      {
+        NOMORE(current_position[Z_AXIS], soft_endstop_max[Z_AXIS]);
+        NOLESS(current_position[Z_AXIS], soft_endstop_min[Z_AXIS]);
+      }
+    #else
+      if (!WITHIN(current_position[Z_AXIS], Z_MIN_POS, Z_MAX_POS))
+      {
+        NOMORE(current_position[Z_AXIS], Z_MAX_POS);
+        NOLESS(current_position[Z_AXIS], Z_MIN_POS);
+      }
+    #endif
 
     #if ENABLED(DEBUG_LEVELING_FEATURE)
       if (DEBUGGING(LEVELING)) DEBUG_POS("(6) Apply Z offset", current_position);
@@ -424,6 +633,32 @@ inline void invalid_extruder_error(const uint8_t e) {
     current_position[Y_AXIS] -= hotend_offset[Y_AXIS][active_extruder] - hotend_offset[Y_AXIS][tmp_extruder];
     current_position[Z_AXIS] -= hotend_offset[Z_AXIS][active_extruder] - hotend_offset[Z_AXIS][tmp_extruder];
 
+    #if HAS_SOFTWARE_ENDSTOPS
+      if (!WITHIN(current_position[Y_AXIS], soft_endstop_min[Y_AXIS], soft_endstop_max[Y_AXIS]))
+      {
+        NOMORE(current_position[Y_AXIS], soft_endstop_max[Y_AXIS]);
+        NOLESS(current_position[Y_AXIS], soft_endstop_min[Y_AXIS]);
+      }
+    #else
+      if (!WITHIN(current_position[Y_AXIS], Y_MIN_POS, Y_MAX_POS))
+      {
+        NOMORE(current_position[Y_AXIS], Y_MAX_POS);
+        NOLESS(current_position[Y_AXIS], Y_MIN_POS);
+      }
+    #endif
+    #if HAS_SOFTWARE_ENDSTOPS
+      if (!WITHIN(current_position[Z_AXIS], soft_endstop_min[Z_AXIS], soft_endstop_max[Z_AXIS]))
+      {
+        NOMORE(current_position[Z_AXIS], soft_endstop_max[Z_AXIS]);
+        NOLESS(current_position[Z_AXIS], soft_endstop_min[Z_AXIS]);
+      }
+    #else
+      if (!WITHIN(current_position[Z_AXIS], Z_MIN_POS, Z_MAX_POS))
+      {
+        NOMORE(current_position[Z_AXIS], Z_MAX_POS);
+        NOLESS(current_position[Z_AXIS], Z_MIN_POS);
+      }
+    #endif
     // Activate the new extruder ahead of calling set_axis_is_at_home!
     active_extruder = tmp_extruder;
 
@@ -556,6 +791,20 @@ void tool_change(const uint8_t tmp_extruder, const float fr_mm_s/*=0.0*/, bool n
             #if ENABLED(SWITCHING_NOZZLE)
               // Always raise by at least 1 to avoid workpiece
               current_position[Z_AXIS] += MAX(-zdiff, 0.0) + 1;
+              #if HAS_SOFTWARE_ENDSTOPS
+                if (!WITHIN(current_position[Z_AXIS], soft_endstop_min[Z_AXIS], soft_endstop_max[Z_AXIS]))
+                {
+                  NOMORE(current_position[Z_AXIS], soft_endstop_max[Z_AXIS]);
+                  NOLESS(current_position[Z_AXIS], soft_endstop_min[Z_AXIS]);
+                }
+              #else
+                if (!WITHIN(current_position[Z_AXIS], Z_MIN_POS, Z_MAX_POS))
+                {
+                  NOMORE(current_position[Z_AXIS], Z_MAX_POS);
+                  NOLESS(current_position[Z_AXIS], Z_MIN_POS);
+                }
+              #endif
+
               planner.buffer_line(current_position, planner.max_feedrate_mm_s[Z_AXIS], active_extruder);
               move_nozzle_servo(tmp_extruder);
             #endif
@@ -574,6 +823,40 @@ void tool_change(const uint8_t tmp_extruder, const float fr_mm_s/*=0.0*/, bool n
           current_position[X_AXIS] += xdiff;
           current_position[Y_AXIS] += ydiff;
           current_position[Z_AXIS] += zdiff;
+
+          #if HAS_SOFTWARE_ENDSTOPS
+            if (!WITHIN(current_position[X_AXIS], soft_endstop_min[X_AXIS], soft_endstop_max[X_AXIS]))
+            {
+              NOMORE(current_position[X_AXIS], soft_endstop_max[X_AXIS]);
+              NOLESS(current_position[X_AXIS], soft_endstop_min[X_AXIS]);
+            }
+            if (!WITHIN(current_position[Y_AXIS], soft_endstop_min[Y_AXIS], soft_endstop_max[Y_AXIS]))
+            {
+              NOMORE(current_position[Y_AXIS], soft_endstop_max[Y_AXIS]);
+              NOLESS(current_position[Y_AXIS], soft_endstop_min[Y_AXIS]);
+            }
+            if (!WITHIN(current_position[Z_AXIS], soft_endstop_min[Z_AXIS], soft_endstop_max[Z_AXIS]))
+            {
+              NOMORE(current_position[Z_AXIS], soft_endstop_max[Z_AXIS]);
+              NOLESS(current_position[Z_AXIS], soft_endstop_min[Z_AXIS]);
+            }
+          #else
+            if (!WITHIN(current_position[X_AXIS], X_MIN_POS, X_MAX_POS))
+            {
+              NOMORE(current_position[X_AXIS], X_MAX_POS);
+              NOLESS(current_position[X_AXIS], X_MIN_POS);
+            }
+            if (!WITHIN(current_position[Y_AXIS], Y_MIN_POS, Y_MAX_POS))
+            {
+              NOMORE(current_position[Y_AXIS], Y_MAX_POS);
+              NOLESS(current_position[Y_AXIS], Y_MIN_POS);
+            }
+            if (!WITHIN(current_position[Z_AXIS], Z_MIN_POS, Z_MAX_POS))
+            {
+              NOMORE(current_position[Z_AXIS], Z_MAX_POS);
+              NOLESS(current_position[Z_AXIS], Z_MIN_POS);
+            }
+          #endif
 
           // Set the new active extruder
           active_extruder = tmp_extruder;
@@ -595,6 +878,20 @@ void tool_change(const uint8_t tmp_extruder, const float fr_mm_s/*=0.0*/, bool n
           #if DISABLED(SWITCHING_NOZZLE)
             // Do a small lift to avoid the workpiece in the move back (below)
             current_position[Z_AXIS] += 1.0;
+            #if HAS_SOFTWARE_ENDSTOPS
+              if (!WITHIN(current_position[Z_AXIS], soft_endstop_min[Z_AXIS], soft_endstop_max[Z_AXIS]))
+              {
+                NOMORE(current_position[Z_AXIS], soft_endstop_max[Z_AXIS]);
+                NOLESS(current_position[Z_AXIS], soft_endstop_min[Z_AXIS]);
+              }
+            #else
+              if (!WITHIN(current_position[Z_AXIS], Z_MIN_POS, Z_MAX_POS))
+              {
+                NOMORE(current_position[Z_AXIS], Z_MAX_POS);
+                NOLESS(current_position[Z_AXIS], Z_MIN_POS);
+              }
+            #endif
+
             planner.buffer_line(current_position, planner.max_feedrate_mm_s[Z_AXIS], active_extruder);
           #endif
           #if ENABLED(DEBUG_LEVELING_FEATURE)
@@ -606,6 +903,29 @@ void tool_change(const uint8_t tmp_extruder, const float fr_mm_s/*=0.0*/, bool n
             // as it is utilized for X2 home position.
             destination[Y_AXIS] -= hotend_offset[Y_AXIS][active_extruder] - hotend_offset[Y_AXIS][tmp_extruder];
             destination[Z_AXIS] -= hotend_offset[Z_AXIS][active_extruder] - hotend_offset[Z_AXIS][tmp_extruder];
+            #if HAS_SOFTWARE_ENDSTOPS
+              if (!WITHIN(destination[Y_AXIS], soft_endstop_min[Y_AXIS], soft_endstop_max[Y_AXIS]))
+              {
+                NOMORE(destination[Y_AXIS], soft_endstop_max[Y_AXIS]);
+                NOLESS(destination[Y_AXIS], soft_endstop_min[Y_AXIS]);
+              }
+              if (!WITHIN(destination[Z_AXIS], soft_endstop_min[Z_AXIS], soft_endstop_max[Z_AXIS]))
+              {
+                NOMORE(destination[Z_AXIS], soft_endstop_max[Z_AXIS]);
+                NOLESS(destination[Z_AXIS], soft_endstop_min[Z_AXIS]);
+              }
+            #else
+              if (!WITHIN(destination[Y_AXIS], Y_MIN_POS, Y_MAX_POS))
+              {
+                NOMORE(destination[Y_AXIS], Y_MAX_POS);
+                NOLESS(destination[Y_AXIS], Y_MIN_POS);
+              }
+              if (!WITHIN(destination[Z_AXIS], Z_MIN_POS, Z_MAX_POS))
+              {
+                NOMORE(destination[Z_AXIS], Z_MAX_POS);
+                NOLESS(destination[Z_AXIS], Z_MIN_POS);
+              }
+            #endif
           #endif
           // Move back to the original (or tweaked) position
           do_blocking_move_to(destination[X_AXIS], destination[Y_AXIS], destination[Z_AXIS]);
