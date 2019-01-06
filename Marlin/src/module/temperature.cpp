@@ -55,6 +55,10 @@
   #include "../feature/leds/printer_event_leds.h"
 #endif
 
+#if ENABLED(SINGLENOZZLE)
+  #include "tool_change.h"
+#endif
+
 #if HOTEND_USES_THERMISTOR
   #if ENABLED(TEMP_SENSOR_1_AS_REDUNDANT)
     static void* heater_ttbl_map[2] = { (void*)HEATER_0_TEMPTABLE, (void*)HEATER_1_TEMPTABLE };
@@ -98,6 +102,26 @@ int16_t Temperature::current_temperature_raw[HOTENDS] = { 0 },
 
 #if ENABLED(AUTO_POWER_E_FANS)
   uint8_t Temperature::autofan_speed[HOTENDS] = { 0 };
+#endif
+
+#if FAN_COUNT > 0
+  void Temperature::set_fanspeed(uint8_t target, uint16_t speed) {
+    if(target >= FAN_COUNT) {
+      return;
+    }
+
+    NOMORE(speed, 255U);
+
+    #if ENABLED(SINGLENOZZLE)
+      if (target != active_extruder) {
+        if (target < EXTRUDERS) singlenozzle_fan_speed[target] = speed;
+        return;
+      }
+      target = 0; // Always use fan index 0 with SINGLENOZZLE
+    #endif
+
+    fan_speed[target] = speed;
+  }
 #endif
 
 #if HAS_HEATED_BED

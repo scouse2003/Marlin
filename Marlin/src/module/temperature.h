@@ -319,7 +319,9 @@ class Temperature {
     #if HAS_TEMP_CHAMBER
       static float analog_to_celsiusChamber(const int raw);
     #endif
-
+    #if FAN_COUNT > 0
+      static void set_fanspeed(uint8_t target, uint16_t speed);
+    #endif
     /**
      * Called from the Temperature ISR
      */
